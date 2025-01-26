@@ -23,5 +23,6 @@ urlpatterns = [
     path('panel/manager/', admin.site.urls),
     path('', TemplateView.as_view(template_name='index.html'), name='home'),
     path('dashboard/', views.home, name='dashboard'),
+    path('inbox/', views.inbox_view, name='inbox'),
     path('accounts/', include('allauth.urls'))
 ]
