@@ -7,12 +7,9 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.auth.transport.requests import Request
 
-# Если изменится диапазон доступа, удалите файл token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-credentials_path = os.path.join(os.path.dirname(__file__), 'credentials.json')
 
 def authenticate_gmail():
-    """Authenticate and return a Gmail service object"""
     creds = None
     # Если токен уже существует, загружаем его
     if os.path.exists('token.pickle'):
@@ -42,7 +39,6 @@ def authenticate_gmail():
         print(f'An error occurred: {error}')
 
 def list_messages(service, label_ids=['INBOX']):
-    """List messages in the user's Gmail inbox and extract relevant information"""
     try:
         # Получаем список сообщений
         results = service.users().messages().list(userId='me', labelIds=label_ids).execute()
@@ -52,7 +48,7 @@ def list_messages(service, label_ids=['INBOX']):
             print('No messages found.')
         else:
             print('Messages:')
-            for message in messages[:5]:  # Получаем 5 последних сообщений
+            for message in messages[:5]:
                 msg = service.users().messages().get(userId='me', id=message['id']).execute()
 
                 # Извлекаем отправителя
@@ -77,7 +73,7 @@ def list_messages(service, label_ids=['INBOX']):
                 # Выводим результаты
                 print(f"From: {from_header}")
                 print(f"Message snippet: {msg['snippet']}")
-                print(f"Text: {text[:200]}...")  # Печатаем первые 200 символов текста
+                print(f"Text: {text[:200]}...")
                 print(f"Links: {links}")
                 print('-' * 50)
 
