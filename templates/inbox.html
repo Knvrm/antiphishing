@@ -1,14 +1,12 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Inbox</title>
-</head>
-<body>
-    <h1>Inbox</h1>
-    <ul>
-        {% for message in messages %}
-        <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+{% for email in emails %}
+    <div>
+        <h3>Отправитель: {{ email.sender_domain }}</h3>
+        <p>{{ email.text|truncatechars:200 }}</p>
+        <p>Ссылки:
+            {% for link in email.links %}
+                <a href="{{ link }}">{{ link }}</a><br>
+            {% endfor %}
+        </p>
+        <hr>
+    </div>
+{% endfor %}
