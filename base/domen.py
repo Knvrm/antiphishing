@@ -2,7 +2,6 @@ import whois
 import requests
 from datetime import datetime
 
-
 class DomainCheck:
     def __init__(self, virustotal_api_key):
         self.virustotal_api_key = virustotal_api_key
