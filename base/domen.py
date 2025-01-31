@@ -4,17 +4,15 @@ from datetime import datetime
 from .email_model import Email
 
 class DomainCheck:
-    def __init__(self, api_key):
-        self.api_key = api_key
+    def __init__(self, api_key): # конструктор, который инициализирует объект с ключом API
+        self.api_key = api_key #
         self.virustotal_url = "https://www.virustotal.com/api/v3/domains/"
 
-    def checkDomain(self, email: Email):
-        domain = email.sender_domain
-
+    def checkDomain(self, email: Email): #метод, для проверки домена
+        domain = email.sender_domain #извлекаем домен из объекта email
         # Проверка через WHOIS
         whois_info = self.check_whois(domain)
         if whois_info:
-            # print(f"Информация WHOIS для домена {domain}: {whois_info}")
             # Проверка на необычные или подозрительные данные WHOIS
             if 'creation_date' in whois_info and whois_info['creation_date']:
                 creation_date = whois_info['creation_date']
@@ -22,16 +20,15 @@ class DomainCheck:
                     creation_date = creation_date[0]
                 # Если домен был зарегистрирован недавно, это может быть подозрительно
                 if (domain_age := (datetime.now() - creation_date).days) < 30:
-                    email.classification.set_result_domain_check(result="Недавно зарегистрирован")
-                    return
+                    email.classification.set_result_domain_check(result="Недавно зарегистрирован") # Если домен новый, помечаем как подозрительный
+                    return # Прекращаем дальнейшие проверки
 
         # Проверка через VirusTotal API
         if self.check_virustotal(domain):
-            email.classification.set_result_domain_check(result="Фишинговый")
-            return
+            email.classification.set_result_domain_check(result="Фишинговый") # Классифицируем домен как фишинговый
+            return  # Прекращаем дальнейшие проверки
 
-        # Если домен не был признан подозрительным
-        email.classification.set_result_domain_check(result="Безопасный")
+        email.classification.set_result_domain_check(result="Безопасный") # Классифицируем домен как безопасный
 
     def check_whois(self, domain: str):
         try:
@@ -44,7 +41,7 @@ class DomainCheck:
 
     def check_virustotal(self, domain: str) -> bool:
         headers = {
-            "x-apikey": self.api_key
+            "x-apikey": self.api_key # Устанавливаем заголовок с API ключом для авторизации
         }
         try:
             # Отправка запроса к VirusTotal API
