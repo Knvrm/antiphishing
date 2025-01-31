@@ -15,7 +15,7 @@ class Classification:
         self.resultTextAnalyze = result
 
     def classify(self):
-        if self.resultDomainCheck == 'Фишинговый' or self.resultLinkCheck == "Фишинговая": #ссылка или домен
+        if self.resultDomainCheck == 'Фишинговый' or self.resultLinkCheck == "Фишинговая": #ссылка или  домен
             self.resultClassification = 'Опасное'
             return "Опасное"
         elif (self.resultDomainCheck == "Недавно зарегистрирован"
