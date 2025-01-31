@@ -1,7 +1,7 @@
 import os
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from .email_model import Email
+from .email_model import Email # Импортируем класс Email для работы с письмами
 
 class TextAnalysis:
     def __init__(self):
@@ -30,9 +30,9 @@ class TextAnalysis:
         )
 
         # Получаем предсказание модели
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-            predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        with torch.no_grad(): # Отключаем вычисление градиентов, так как это только предсказание
+            outputs = self.model(**inputs) # Передаем данные в модель
+            predictions = torch.nn.functional.softmax(outputs.logits, dim=-1) # Применяем softmax для вероятностей
 
         # Получаем вероятности для каждого класса
         probs = predictions[0].tolist()
