@@ -1,8 +1,8 @@
-from .classif import Classification
+from .classif import Classification #импорт
 class Email:
-    def __init__(self, sender: str, sender_domain: str, text: str, link: str):
-        self.sender = sender  # Полный адрес отправителя
-        self.sender_domain = sender_domain  # Домен отправителя
-        self.text = text  # Текст письма
-        self.link = link  # Первая ссылка из письма
-        self.classification = Classification()  # Классификация письма
+    def __init__(self, sender: str, sender_domain: str, text: str, link: str): #конструктор
+        self.sender = sender  # адрес отправителя
+        self.sender_domain = sender_domain  # домен отправителя
+        self.text = text  # текст письма
+        self.link = link  # первая ссылка из письма
+        self.classification = Classification()  # классификация письма
