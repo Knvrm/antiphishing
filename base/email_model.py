@@ -1,4 +1,4 @@
-from .classif import Classification #импорт
+from .classif import Classification
 class Email:
     def __init__(self, sender: str, sender_domain: str, text: str, link: str): #конструктор
         self.sender = sender  # адрес отправителя
