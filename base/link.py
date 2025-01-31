@@ -1,5 +1,5 @@
 import requests
-from .email_model import Email
+from .email_model import Email #импорт модели Email, которая содержит информацию о письме
 
 class LinkCheck:
     def __init__(self, api_key: str):
@@ -43,27 +43,25 @@ class LinkCheck:
             print(f"Ошибка: {e}")
         return "Не удалось получить результаты"
 
-    def checkLink(self, email: Email):
-        link = email.link
+    def checkLink(self, email: Email): #получаем ссылку из объекта email
+        link = email.link #извлекаем ссылку
         results = []
-
-        if link:
+        if link: #если в письме есть ссылка
             analysis_id = self.analyze_url(link)
 
             if analysis_id:
                 status = self.check_analysis_status(analysis_id)
-                results.append(f":\n{status}\n")
-                # print(status)
+                results.append(f":\n{status}\n") #добавляем полученный статус
             else:
-                results.append(f"Ошибка при отправке на анализ\n")
-        else:
-            results.append("Ссылка не найдена в письме\n")
+                results.append(f"Ошибка при отправке на анализ\n") #ошибка
+        else: #ссылка не найдена
+            results.append("Ссылка не найдена в письме\n")                                                #
 
-        if any("статус: phishing" in result.lower() for result in results):
-            email.classification.set_result_link_check("Фишинговая")
-        elif any("статус: suspicious" in result.lower() for result in results):
-            email.classification.set_result_link_check("Подозрительная")
-        elif results is not None:
-            email.classification.set_result_link_check("Безопасная")
-        else:
-            email.classification.set_result_link_check(None)
+        if any("статус: phishing" in result.lower() for result in results): # Если хотя бы в одном результате встречается "phishing"
+            email.classification.set_result_link_check("Фишинговая") # Устанавливаем классификацию как "Фишинговая"
+        elif any("статус: suspicious" in result.lower() for result in results): # Если хотя бы в одном результате встречается "suspicious"
+            email.classification.set_result_link_check("Подозрительная")  # Устанавливаем классификацию как "Подозрительная"
+        elif results is not None:  # Если результаты есть, но не найдено фишинга или подозрительности
+            email.classification.set_result_link_check("Безопасная") # Устанавливаем классификацию как "Безопасная"
+        else:  # Если результаты вообще не были получены
+            email.classification.set_result_link_check(None) #классификация неопределенна
