@@ -19,7 +19,7 @@ class Classification:
             self.resultClassification = 'Опасное'
             return "Опасное"
         elif (self.resultDomainCheck == "Недавно зарегистрирован"
-              or self.resultTextAnalyze == 'Фишинговый' or self.resultLinkCheck == "Подозрительная"): #домен ссылка или текста
+              or self.resultTextAnalyze == 'Фишинговый' or self.resultLinkCheck == "Подозрительная"): #домен ссылка   или текста
             self.resultClassification = 'Подозрительное'
             return "Подозрительное"
         else:
