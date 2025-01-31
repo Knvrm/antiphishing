@@ -2,87 +2,64 @@
 {% load i18n %}
 
 {% block content %}
-	<div class="limiter">
-		<div class="container-login100" style="background-image: url('images/bg-01.jpg');">
-			<div class="wrap-login100 p-l-55 p-r-55 p-t-65 p-b-54">
-				<form class="login100-form validate-form" method="post">{% csrf_token %}
-					{% if proccess == "connect" %}
-						<div class="card-body">
-							<h5 class="card-title">{% trans "You have already loggined" %}</h5>
-							<p class="card-text">{% blocktrans with provider.name as provider %} Connect {{ provider }}{% endblocktrans %}</p>
-						</div>
-					{% else %}
-						<div class="flex-c-m">
-							<button class="login100-social-item bg3" style="width: 200px; height: 100px; border-radius: 8px; background-color: #db4437; color: white; font-size: 18px; text-align: center; display: flex; justify-content: center; align-items: center; border: none; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
-								<i class="fa fa-google" style="margin-right: 10px;"></i>
-								<span>Login with Google</span>
-							</button>
-						</div>
-					{% endif %}
-				</form>
-			</div>
-		</div>
-	</div>
+  <div class="auth-container">
+    {% if proccess == "connect" %}
+      <h1>{% trans "Вы уже авторизованы" %}</h1>
+      <p>{% blocktrans with provider.name as provider %} Подключено: {{ provider }}{% endblocktrans %}</p>
+    {% else %}
+      <h1>Вход через Google</h1>
+      <form method="post">{% csrf_token %}
+        <button class="google-login-btn" type="submit">
+          <i class="fa fa-google"></i> Войти через Google
+        </button>
+      </form>
+    {% endif %}
+  </div>
 
-	<div id="dropDownSelect1"></div>
+  <style>
+    body {
+      background: #ffffff;
+      font-family: Arial, sans-serif;
+    }
 
-	<!-- Стили для страницы -->
-	<style>
-		/* Контейнер страницы */
-		.limiter {
-			width: 100%;
-			height: 100%;
-			background-color: #f2f2f2;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-		}
+    .auth-container {
+      background-color: #36bbce;
+      color: #000;
+      width: 400px;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
 
-		/* Фон и контейнер формы */
-		.container-login100 {
-			width: 100%;
-			max-width: 480px;
-			padding: 50px 40px;
-			background-size: cover;
-			background-position: center;
-			border-radius: 10px;
-			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-		}
+    .auth-container h1 {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
 
-		/* Обертка формы */
-		.wrap-login100 {
-			width: 100%;
-			background-color: rgba(255, 255, 255, 0.9);
-			padding: 30px;
-			border-radius: 10px;
-		}
+    .google-login-btn {
+      background-color: #db4437;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+    }
 
-		/* Стили для кнопки авторизации */
-		.login100-social-item {
-			font-size: 16px;
-			font-weight: 600;
-			padding: 15px;
-			border-radius: 5px;
-			text-transform: uppercase;
-			cursor: pointer;
-			transition: all 0.3s ease;
-		}
-
-		/* При наведении на кнопку */
-		.login100-social-item:hover {
-			box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
-			transform: scale(1.05);
-		}
-
-		/* Настройки для текста кнопки */
-		.login100-social-item i {
-			font-size: 20px;
-		}
-
-		/* Общие стили для текста */
-		.card-body h5, .card-body p {
-			color: #333;
-		}
-	</style>
-
+    .google-login-btn:hover {
+      background-color: #b83c30;
+    }
+  </style>
 {% endblock %}
