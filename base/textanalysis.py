@@ -1,69 +1,59 @@
-import re
-from typing import List
-from pymorphy2 import MorphAnalyzer
-import joblib  # Импортируем joblib напрямую
-
+import os
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from .email_model import Email
 
 class TextAnalysis:
     def __init__(self):
-        # Инициализация морфологического анализатора
-        self.morph = MorphAnalyzer()
+        # Загружаем модель и токенизатор для классификации фишинговых писем
+        current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Загрузка обученной модели машинного обучения для анализа фишинга
-        self.model = joblib.load('phishing_model.pkl')  # Модель машинного обучения для анализа
-
-        # Список подозрительных фраз
-        self.suspicious_phrases = [
-            "ваш счет заблокирован", "подтвердите свою личность", "неизвестная активность",
-            "кликните здесь", "ваш пароль", "необходимо срочно", "попробуйте сейчас",
-            "неверный вход", "срочная проверка", "аккаунт заблокирован"
-        ]
+        # Загрузка токенизатора и модели для детектирования фишинговых писем
+        self.tokenizer = AutoTokenizer.from_pretrained("cybersectony/phishing-email-detection-distilbert_v2.1")
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            "cybersectony/phishing-email-detection-distilbert_v2.1")
 
     def analyzeText(self, email: 'Email') -> bool:
         """
         Метод для анализа текста письма с использованием модели машинного обучения.
-        Возвращает True, если письмо подозрительное, иначе False.
+        Возвращает True, если письмо фишинговое, иначе False.
         """
         # Извлекаем текст из email
-        text = email.body
+        text = email.text
 
-        # Применяем модель машинного обучения для анализа
-        return self._is_phishing(text)
+        # Преобразуем текст письма в формат, который принимает модель
+        inputs = self.tokenizer(
+            text,
+            return_tensors="pt",  # Формат для PyTorch
+            truncation=True,  # Обрезка текста, если он слишком длинный
+            max_length=512  # Максимальная длина текста
+        )
 
-    def _is_phishing(self, text: str) -> bool:
-        """
-        Приватный метод для использования модели машинного обучения для оценки текста.
-        Возвращает True, если текст подозрительный (фишинг), иначе False.
-        """
-        # Преобразуем текст в формат, подходящий для модели (например, вектора признаков)
-        features = self._extract_features(text)
+        # Получаем предсказание модели
+        with torch.no_grad():
+            outputs = self.model(**inputs)
+            predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
 
-        # Прогнозируем, является ли текст фишингом
-        prediction = self.model.predict([features])
-        return prediction == 1  # 1 — это фишинг, 0 — не фишинг
+        # Получаем вероятности для каждого класса
+        probs = predictions[0].tolist()
 
-    def _extract_features(self, text: str) -> List[float]:
-        """
-        Приватный метод для извлечения признаков из текста, которые использует модель.
-        Это может включать различные методы, такие как TF-IDF или другие векторизации.
-        """
-        # Пример: извлечение длины текста, количества подозрительных фраз и т.д.
-        features = []
-        features.append(len(text))  # Пример признака: длина текста
+        # Создаем словарь с результатами
+        labels = {
+            "legitimate_email": probs[0],
+            "phishing_url": probs[1],
+            "legitimate_url": probs[2],
+            "phishing_url_alt": probs[3]
+        }
 
-        suspicious_count = sum(1 for phrase in self.suspicious_phrases if phrase in text.lower())
-        features.append(suspicious_count)  # Признак: количество подозрительных фраз
+        max_label = max(labels.items(), key=lambda x: x[1])
 
-        # Вы можете добавить дополнительные признаки, такие как частота использования специфических слов
-        return features
+        if max_label[0] == "phishing_url":
+            # print(text)
+            # print('Фишинговый текст')
+            email.classification.set_result_text_analyze('Фишинговый')
+        else:
+            # print(text)
+            # print('Безопасный текст')
+            email.classification.set_result_text_analyze('Без признаков фишинга')
 
-    def findSuspiciousPhrases(self, text: str) -> List[str]:
-        """
-        Метод для нахождения подозрительных фраз в тексте.
-        Возвращает список найденных фраз.
-        """
-        found_phrases = []
-        for phrase in self.suspicious_phrases:
-            if phrase.lower() in text.lower():
-                found_phrases.append(phrase)
-        return found_phrases
+        return max_label[0] == "phishing_url"

@@ -1,12 +1,240 @@
-{% for email in emails %}
-    <div>
-        <h3>Отправитель: {{ email.sender_domain }}</h3>
-        <p>{{ email.text|truncatechars:200 }}</p>
-        <p>Ссылки:
-            {% for link in email.links %}
-                <a href="{{ link }}">{{ link }}</a><br>
-            {% endfor %}
-        </p>
-        <hr>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Письма</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">  <!-- Для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css"/> <!-- Для всплывающих уведомлений -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7fa;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .email-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .email-item {
+            padding: 15px;
+            border-bottom: 1px solid #e1e1e1;
+            margin-bottom: 15px;
+        }
+
+        .email-item:last-child {
+            border-bottom: none;
+        }
+
+        .email-item h3 {
+            font-size: 1.2em;
+            margin: 0 0 10px;
+        }
+
+        .email-item p {
+            font-size: 0.95em;
+            color: #555;
+        }
+
+        .classification {
+            font-weight: bold;
+        }
+
+        .classification.safe {
+            color: green;
+        }
+
+        .classification.suspicious {
+            color: orange;
+        }
+
+        .classification.danger {
+            color: red;
+        }
+
+        .strong-text {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .hr {
+            margin: 20px 0;
+            border: 0;
+            border-top: 1px solid #ddd;
+        }
+
+        .link {
+            color: #1e88e5;
+            text-decoration: none;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        #notifications {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .notification {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px 30px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 150px;
+            height: 40px;
+            min-width: 300px;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 16px;
+            position: relative; /* Для позиционирования кнопки закрытия */
+            text-align: center;
+        }
+
+        .notification.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .notification.warning {
+            background-color: orange;
+            color: #856404;
+        }
+
+        .notification.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: inherit;
+            cursor: pointer;
+            position: absolute;
+            top: 5px;
+            right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Информация о письмах</h1>
+
+<div class="email-container">
+    {% for email in emails %}
+        <div class="email-item">
+            <h3>Отправитель: {{ email.sender }}</h3>
+            <p>{{ email.text|striptags|linebreaksbr|escape|truncatechars:200 }}</p>
+
+            <p>Домен:
+                <span class="strong-text
+                    {% if email.classification.resultDomainCheck == 'Безопасный' %}
+                        safe
+                    {% elif email.classification.resultDomainCheck == 'Опасный' %}
+                        danger
+                    {% else %}
+                        suspicious
+                    {% endif %}">
+                    {{ email.classification.resultDomainCheck }}
+                </span>
+            </p>
+
+
+            {% if email.link %}
+                <p>Ссылка:
+                    <span class="strong-text
+                        {% if email.classification.resultLinkCheck == 'Ссылка безопасная' %}
+                            safe
+                        {% elif email.classification.resultLinkCheck == 'Ссылка есть на virustotal' %}
+                            danger
+                        {% else %}
+                            suspicious
+                        {% endif %}">
+                        {{ email.classification.resultLinkCheck }}
+                    </span>
+                </p>
+            {% endif %}
+
+            <p>Текст:
+                <span class="strong-text
+                    {% if email.classification.resultTextAnalyze == 'Текст безопасный' %}
+                        safe
+                    {% elif email.classification.resultTextAnalyze == 'Текст опасный' %}
+                        danger
+                    {% else %}
+                        suspicious
+                    {% endif %}">
+                    {{ email.classification.resultTextAnalyze }}
+                </span>
+            </p>
+
+            <p>Классификация:
+                <span class="classification
+                    {% if email.classification.resultClassification == 'Безопасное' %}
+                        safe
+                    {% elif email.classification.resultClassification == 'Подозрительное' %}
+                        suspicious
+                    {% else %}
+                        danger
+                    {% endif %}">
+                    {{ email.classification.resultClassification }}
+                </span>
+            </p>
+
+            <hr class="hr">
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Вставка Toastr.js для всплывающих уведомлений -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+
+{% if messages %}
+    <div id="notifications">
+        {% for message in messages %}
+            <div class="notification alert alert-{{ message.tags }}">
+                <button class="close-btn">&times;</button>
+                {{ message }}
+            </div>
+        {% endfor %}
     </div>
-{% endfor %}
+{% endif %}
+
+<script>
+    // Закрыть уведомление по клику на кнопку
+    document.addEventListener('DOMContentLoaded', function() {
+        const closeButtons = document.querySelectorAll('.close-btn');
+
+        closeButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                const notification = this.parentElement;
+                notification.style.display = 'none'; // Скрыть уведомление
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 import requests
-from typing import List
+from .email_model import Email
 
 class LinkCheck:
     def __init__(self, api_key: str):
@@ -43,29 +43,27 @@ class LinkCheck:
             print(f"Ошибка: {e}")
         return "Не удалось получить результаты"
 
-    def checkLinks(self, links: List[str]) -> List[str]:
+    def checkLink(self, email: Email):
+        link = email.link
         results = []
-        for link in links:
-            print(f"Обрабатываем ссылку: {link}")
+
+        if link:
             analysis_id = self.analyze_url(link)
 
             if analysis_id:
                 status = self.check_analysis_status(analysis_id)
-                results.append(f"Результаты для {link}:\n{status}\n")
+                results.append(f":\n{status}\n")
+                # print(status)
             else:
-                results.append(f"Ошибка при отправке {link} на анализ\n")
+                results.append(f"Ошибка при отправке на анализ\n")
+        else:
+            results.append("Ссылка не найдена в письме\n")
 
-        return results
-
-if __name__ == "__main__":
-    api_key = "6c37fb8dc32c4665939056efe8ca9b9b7ef52eca9900f19b1fbc8eb4c03a11d7"
-    link_check = LinkCheck(api_key)
-
-    # Список ссылок для проверки
-    links_to_check = ["https://www.gismeteo.ru/"]
-
-    results = link_check.checkLinks(links_to_check)
-
-    # Вывод результатов
-    for result in results:
-        print(result)
+        if any("статус: phishing" in result.lower() for result in results):
+            email.classification.set_result_link_check("Фишинговая")
+        elif any("статус: suspicious" in result.lower() for result in results):
+            email.classification.set_result_link_check("Подозрительная")
+        elif results is not None:
+            email.classification.set_result_link_check("Безопасная")
+        else:
+            email.classification.set_result_link_check(None)

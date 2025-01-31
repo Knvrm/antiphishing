@@ -1,17 +1,20 @@
 import whois
 import requests
 from datetime import datetime
+from .email_model import Email
 
 class DomainCheck:
-    def __init__(self, virustotal_api_key):
-        self.virustotal_api_key = virustotal_api_key
+    def __init__(self, api_key):
+        self.api_key = api_key
         self.virustotal_url = "https://www.virustotal.com/api/v3/domains/"
 
-    def checkDomain(self, domain: str) -> bool:
+    def checkDomain(self, email: Email):
+        domain = email.sender_domain
+
         # Проверка через WHOIS
         whois_info = self.check_whois(domain)
         if whois_info:
-            print(f"Информация WHOIS для домена {domain}: {whois_info}")
+            # print(f"Информация WHOIS для домена {domain}: {whois_info}")
             # Проверка на необычные или подозрительные данные WHOIS
             if 'creation_date' in whois_info and whois_info['creation_date']:
                 creation_date = whois_info['creation_date']
@@ -19,15 +22,16 @@ class DomainCheck:
                     creation_date = creation_date[0]
                 # Если домен был зарегистрирован недавно, это может быть подозрительно
                 if (domain_age := (datetime.now() - creation_date).days) < 30:
-                    print(f"Домен был зарегистрирован всего {domain_age} дней назад, это может быть подозрительно.")
-                    return True
+                    email.classification.set_result_domain_check(result="Недавно зарегистрирован")
+                    return
 
         # Проверка через VirusTotal API
         if self.check_virustotal(domain):
-            print(f"Домен {domain} помечен как фишинговый в базе данных VirusTotal.")
-            return True
+            email.classification.set_result_domain_check(result="Фишинговый")
+            return
 
-        return False
+        # Если домен не был признан подозрительным
+        email.classification.set_result_domain_check(result="Безопасный")
 
     def check_whois(self, domain: str):
         try:
@@ -40,7 +44,7 @@ class DomainCheck:
 
     def check_virustotal(self, domain: str) -> bool:
         headers = {
-            "x-apikey": self.virustotal_api_key
+            "x-apikey": self.api_key
         }
         try:
             # Отправка запроса к VirusTotal API
@@ -60,13 +64,3 @@ class DomainCheck:
         except Exception as e:
             print(f"Ошибка при подключении к VirusTotal API: {e}")
         return False
-
-if __name__ == "__main__":
-    api_key = "6c37fb8dc32c4665939056efe8ca9b9b7ef52eca9900f19b1fbc8eb4c03a11d7"  # Замените на ваш ключ API
-    domain_check = DomainCheck(api_key)
-    domain = "msu.ru"
-
-    if domain_check.checkDomain(domain):
-        print(f"Домен {domain} может быть фишингом.")
-    else:
-        print(f"Домен {domain} безопасен.")

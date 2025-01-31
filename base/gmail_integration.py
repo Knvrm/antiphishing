@@ -6,25 +6,21 @@ from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.errors import HttpError
+from .link import LinkCheck
+from .domen import DomainCheck
+from .textanalysis import TextAnalysis
+from .email_model import Email
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-
-class Email:
-    """Класс для хранения информации о письме"""
-
-    def __init__(self, sender_domain: str, text: str, links: list):
-        self.sender_domain = sender_domain
-        self.text = text
-        self.links = links
-
-    def __repr__(self):
-        return f"Email(from={self.sender_domain}, text={self.text[:50]}..., links={self.links})"
-
 
 class MailService:
     """Класс для работы с Gmail API"""
     def __init__(self):
+        self.api_key = "6c37fb8dc32c4665939056efe8ca9b9b7ef52eca9900f19b1fbc8eb4c03a11d7"
         self.service = self.authenticate_gmail()
+        self.link_checker = LinkCheck(api_key=self.api_key)
+        self.domain_checker = DomainCheck(api_key=self.api_key)
+        self.text_analysis = TextAnalysis()
 
     def authenticate_gmail(self):
         """Аутентификация и подключение к Gmail API"""
@@ -67,21 +63,24 @@ class MailService:
                 headers = msg['payload']['headers']
                 from_header = next((header['value'] for header in headers if header['name'] == 'From'), None)
 
-                # Извлекаем домен отправителя
-                sender_domain = from_header.split('@')[-1] if from_header and '@' in from_header else 'Unknown'
+                # Извлекаем полный адрес отправителя
+                if from_header:
+                    full_sender = from_header.split('<')[0].strip()  # Полный адрес отправителя
+                    sender_domain = from_header.split('@')[-1] if '@' in from_header else 'Unknown'
 
-                # Извлекаем текст письма
+                # Извлекаем текст письма и очищаем от HTML
                 text = self.extract_text(msg)
 
-                # Ищем ссылки в тексте письма
+                # Ищем ссылки в тексте письма, но извлекаем только первую
                 links = re.findall(r'(https?://[^\s]+)', text)
+                first_link = links[0] if links else None  # Возвращаем только первую ссылку
 
                 # Создаем объект Email и добавляем в список
-                email = Email(sender_domain=sender_domain, text=text, links=links)
+                email = Email(sender=full_sender, sender_domain=sender_domain, text=text, link=first_link)
                 emails.append(email)
 
-        except HttpError as error:
-            print(f'An error occurred: {error}')
+        except Exception as e:
+            print(f"Ошибка при получении писем: {e}")
 
         return emails
 
@@ -101,15 +100,8 @@ class MailService:
             return "Error extracting text"
 
     def pass_data_for_analysis(self, email: Email):
-        """Обрабатывает письмо для анализа (заглушка)"""
-        print(f"Analyzing email from: {email.sender_domain}")
-        print(f"Text preview: {email.text[:100]}...")
-        print(f"Links found: {email.links}")
+        self.link_checker.checkLink(email)
 
+        self.domain_checker.checkDomain(email)
 
-if __name__ == '__main__':
-    mail_service = MailService()
-    emails = mail_service.get_emails()
-
-    for email in emails:
-        mail_service.pass_data_for_analysis(email)
+        self.text_analysis.analyzeText(email)

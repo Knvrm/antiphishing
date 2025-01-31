@@ -15,10 +15,10 @@
             <p class="card-text">{% blocktrans with provider.name as provider %}You can sign in {{ provider }}{% endblocktrans %}</p>
             <form method="post">
               {% csrf_token %}
-              <button class="btn btn-light">{% trans "Sign in Google" %}</button>
+              <button class="btn">{% trans "Sign in Google" %}</button>
             </form>
           </div>
-        {% endif %} 
+        {% endif %}
       </div>
     </div>
   </div>
